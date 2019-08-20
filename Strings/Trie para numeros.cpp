@@ -25,23 +25,6 @@ void add(ll x){
 	val[cur] = x;
 }
 
-int rem(ll x, int cur = 0, int pos = B){
-	if(pos < 0){
-		if(isEnd[cur]) isEnd[cur] --;
-		if(!adj[cur][0] && !adj[cur][1] && isEnd[cur] == 0){
-			return -1;
-		}	
-		return cur;
-	}
-	bool index = (1ll << pos) & x;
-	int ret = rem(x, adj[cur][index], pos - 1);
-	if(ret == -1) adj[cur][index] = 0;
-	if(!adj[cur][0] && !adj[cur][1] && isEnd[cur] == 0){
-		return -1;
-	}
-	return cur;
-}
-
 ll getval(ll x){
 	int cur = 0;
 	IFR(i, B, 0){

@@ -1,5 +1,4 @@
-
-
+//KMP O(N + M)
 void kmp(string &cad){
 	p[0] = 0;
 	for(int i = 1; i < m; ++i){

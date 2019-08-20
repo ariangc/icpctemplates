@@ -1,123 +1,50 @@
-// Two-phase simplex algorithm for solving linear programs:
-//     maximize     c^T x
-//     subject to   Ax <= b
-//                  x >= 0
-// INPUT: A -- an m x n matrix
-//        b -- an m-dimensional vector
-//        c -- an n-dimensional vector
-//        x -- a vector where the optimal solution will be stored
-// OUTPUT: value of the optimal solution (infinity if unbounded
-//         above, nan if infeasible)
-// To use this code, create an LPSolver object with A, b, and c as
-// arguments.  Then, call Solve(x).
-
-typedef long double DOUBLE;
-typedef vector<DOUBLE> VD;
-typedef vector<VD> VVD;
-typedef vector<int> VI;
-
-const DOUBLE EPS = 1e-9;
-
-struct LPSolver {
-  int m, n;
-  VI B, N;
-  VVD D;
-
-	LPSolver(const VVD &A, const VD &b, const VD &c) : 
-		m(b.size()), n(c.size()), N(n+1), B(m), D(m+2, VD(n+2)) {
-		for (int i = 0; i < m; i++) for (int j = 0; j < n; j++) 
-			D[i][j] = A[i][j];
-		for (int i = 0; i < m; i++) 
-			B[i] = n+i; D[i][n] = -1; D[i][n+1] = b[i]; 
-		for (int j = 0; j < n; j++) 
-			N[j] = j; D[m][j] = -c[j];
-		N[n] = -1; D[m+1][n] = 1;
+vector<int> X,Y;
+vector<vector<double> > A;
+vector<double> b,c;
+double z;
+int n,m;
+void pivot(int x,int y){
+	swap(X[y],Y[x]);
+	b[x]/=A[x][y];
+	fore(i,0,m)if(i!=y)A[x][i]/=A[x][y];
+	A[x][y]=1/A[x][y];
+	fore(i,0,n)if(i!=x&&abs(A[i][y])>EPS){
+		b[i]-=A[i][y]*b[x];
+		fore(j,0,m)if(j!=y)A[i][j]-=A[i][y]*A[x][j];
+		A[i][y]=-A[i][y]*A[x][y];
 	}
-	   
-	void Pivot(int r, int s) {
-		for (int i = 0; i < m+2; i++) if (i != r)
-			for (int j = 0; j < n+2; j++) if (j != s)
-				D[i][j] -= D[r][j] * D[i][s] / D[r][s];
-		for (int j = 0; j < n+2; j++) if (j != s) 
-			D[r][j] /= D[r][s];
-		for (int i = 0; i < m+2; i++) if (i != r) 
-			D[i][s] /= -D[r][s];
-		D[r][s] = 1.0 / D[r][s];
-		swap(B[r], N[s]);
-	}
-
-	bool Simplex(int phase) {
-		int x = phase == 1 ? m+1 : m;
-		while (true) {
-			int s = -1;
-			for (int j = 0; j <= n; j++) {
-				if (phase == 2 && N[j] == -1) continue;
-				if (s == -1 || D[x][j] < D[x][s] || 
-					 D[x][j] == D[x][s] && N[j] < N[s]) s = j;
-			}
-			if (D[x][s] >= -EPS) return true;
-			int r = -1;
-			for (int i = 0; i < m; i++) {
-				if (D[i][s] <= 0) continue;
-				if (r == -1 || 
-					 D[i][n+1] / D[i][s] < D[r][n+1] / D[r][s] ||
-	    			 D[i][n+1] / D[i][s] == D[r][n+1] / D[r][s] && 
-					 B[i] < B[r]) r = i;
-      	}
-			if (r == -1) return false;
-			Pivot(r, s);
-		}
-	}
-
-	DOUBLE Solve(VD &x) {
-		int r = 0;
-		for (int i = 1; i < m; i++) if (D[i][n+1] < D[r][n+1]) r = i;
-		if (D[r][n+1] <= -EPS) {
-			Pivot(r, n);
-			if (!Simplex(1) || D[m+1][n+1] < -EPS) 
-				return -numeric_limits<DOUBLE>::infinity();
-			for (int i = 0; i < m; i++) if (B[i] == -1) {
-				int s = -1;
-				for (int j = 0; j <= n; j++) 
-	  				if (s == -1 || D[i][j] < D[i][s] || 
-						 D[i][j] == D[i][s] && N[j] < N[s]) s = j;
-				Pivot(i, s);
-			}
-		}
-		if (!Simplex(2)) return numeric_limits<DOUBLE>::infinity();
-		x = VD(n);
-		for (int i = 0; i < m; i++) if (B[i] < n) 
-			x[B[i]] = D[i][n+1];
-		return D[m][n+1];
-	}
-};
-
-int main() {
-
-  const int m = 4;
-  const int n = 3;  
-  DOUBLE _A[m][n] = {
-    { 6, -1, 0 },
-    { -1, -5, 0 },
-    { 1, 5, 1 },
-    { -1, -5, -1 }
-  };
-  DOUBLE _b[m] = { 10, -4, 5, -5 };
-  DOUBLE _c[n] = { 1, -1, 0 };
-  
-  VVD A(m);
-  VD b(_b, _b + m);
-  VD c(_c, _c + n);
-  for (int i = 0; i < m; i++) A[i] = VD(_A[i], _A[i] + n);
-
-  LPSolver solver(A, b, c);
-  VD x;
-  DOUBLE value = solver.Solve(x);
-  
-  cerr << "VALUE: "<< value << endl;
-  cerr << "SOLUTION:";
-  for (size_t i = 0; i < x.size(); i++) cerr << " " << x[i];
-  cerr << endl;
-  return 0;
+	z+=c[y]*b[x];
+	fore(i,0,m)if(i!=y)c[i]-=c[y]*A[x][i];
+	c[y]=-c[y]*A[x][y];
 }
-
+pair<double,vector<double> > simplex( // maximize c^T x s.t. Ax<=b, x>=0
+		vector<vector<double> > _A, vector<double> _b, vector<double> _c){
+	// returns pair (maximum value, solution vector)
+	A=_A;b=_b;c=_c;
+	n=b.size();m=c.size();z=0.;
+	X=vector<int>(m);Y=vector<int>(n);
+	fore(i,0,m)X[i]=i;
+	fore(i,0,n)Y[i]=i+m;
+	while(1){
+		int x=-1,y=-1;
+		double mn=-EPS;
+		fore(i,0,n)if(b[i]<mn)mn=b[i],x=i;
+		if(x<0)break;
+		fore(i,0,m)if(A[x][i]<-EPS){y=i;break;}
+		assert(y>=0); // no solution to Ax<=b
+		pivot(x,y);
+	}
+	while(1){
+		double mx=EPS;
+		int x=-1,y=-1;
+		fore(i,0,m)if(c[i]>mx)mx=c[i],y=i;
+		if(y<0)break;
+		double mn=1e200;
+		fore(i,0,n)if(A[i][y]>EPS&&b[i]/A[i][y]<mn)mn=b[i]/A[i][y],x=i;
+		assert(x>=0); // c^T x is unbounded
+		pivot(x,y);
+	}
+	vector<double> r(m);
+	fore(i,0,n)if(Y[i]<m)r[Y[i]]=b[i];
+	return mp(z,r);
+}

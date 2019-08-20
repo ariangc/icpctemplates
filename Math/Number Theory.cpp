@@ -75,7 +75,7 @@ void sieve()
     } 
 } 
 
-// Lucas Teorem 
+// Lucas Theorem 
 // Cuando n y m son grandes y se pide comb(n,m)%MOD, donde 
 // MOD es un numero primo, se puede usar el Teorema de Lucas.
 ll comb( ll n, ll k ){

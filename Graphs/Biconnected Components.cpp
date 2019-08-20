@@ -1,51 +1,29 @@
-//Finds Biconnected Components
+//Biconnected Components Benq
 
-bool usd[1005];
-int low[1005], d[1005], prev[1005], cnt;
-vector <int> adj[1005];
-stack <ii> S;
+vector<ii> st;
+int par[N];
+int cnt, num[N], low[N];
+vector<int> adj[N];
+vector< vector<ii> > bcc;
 
-void Outcomp( int u , int v ){
-	printf("New Component\n");
-	ii e;
-	do{
-		e = S.top(); S.pop();
-		cout << e.fst << " " << e.snd << endl;
-	} while( e != mp( u , v ) );
-}
-
-void dfs( int u ){
-	usd[u] = 1; cnt++;
-	low[u] = d[u] = cnt;
-	REP(i,0,sz(adj[u])){
-		int v = adj[u][i];
-		if( !usd[v] ){
-			S.push( mp( u , v ) );
-			prev[v] = u; dfs( v );
-			if( low[v] >= d[u] ) Outcomp( u , v );
-			low[u] = min( low[u] , low[v] );
-		}
-		else if( prev[u] != v and d[v] < d[u] ){
-			S.push( mp( u , v ) );
-			low[u] = min( low[u] , d[v] );
+void tarjan(int u, bool root = 0){
+	num[u] = low[u] = cnt++;
+	int child = 0;
+	for(int v : adj[u]) if(v != par[u]){
+		if(num[v] == -1){
+			child++, par[v] = u;
+			st.push_back(ii(u,v));
+			tarjan(v);
+			low[u] = min(low[u],low[v]);
+			if((root && child > 1) || (!root && num[u] <= low[v])){
+				vector<ii> tmp;
+				while(st.back() != ii(u,v)) tmp.pb(st.back()), st.pop_back();
+				tmp.pb(st.back()), st.pop_back();
+				bcc.pb(tmp);
+			}
+		}else if(num[v] < num[u]){
+			low[u] = min(low[u],num[v]);
+			st.pb(ii(u,v));
 		}
 	}
-}
-
-int main(){
-	int n, m;
-	cin >> n >> m;
-	REP(i,0,m){
-		int a , b;
-		cin >> a >> b;
-		adj[a].pb(b);
-		adj[b].pb(a);
-	}
-	cnt = 0;
-	memset(usd,0,sizeof(usd));
-	memset(prev,-1,sizeof(prev));
-	REP(i,0,n){
-		if( !usd[i] ) dfs(i);
-	}
-	return 0;
 }
